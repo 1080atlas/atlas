@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Tuple
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from .database import DatabaseManager
 
 class KnowledgeBase:
@@ -26,6 +24,7 @@ class KnowledgeBase:
         """Lazy load the sentence transformer model."""
         if self.model is None:
             print(f"Loading embedding model: {self.model_name}")
+            from sentence_transformers import SentenceTransformer
             self.model = SentenceTransformer(self.model_name)
     
     def _create_sample_knowledge(self):
@@ -95,6 +94,10 @@ Volume confirms price movements. Rising prices on increasing volume suggest stro
                 f.write(content)
         
         print(f"Created {len(sample_files)} sample knowledge files in {self.knowledge_dir}")
+    
+    def build(self):
+        """Build embeddings for all knowledge files - call this once at startup."""
+        return self.update_knowledge_base()
     
     def load_knowledge_files(self) -> List[Dict]:
         """Load all markdown files from knowledge directory."""
@@ -204,6 +207,7 @@ Volume confirms price movements. Rising prices on increasing volume suggest stro
             return []
         
         # Calculate similarities
+        from sklearn.metrics.pairwise import cosine_similarity
         similarities = []
         for entry in knowledge_entries:
             if entry['embedding'] is not None:

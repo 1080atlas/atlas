@@ -74,7 +74,7 @@ class AtlasPipeline:
             print("\n1. PLANNING PHASE")
             print("-" * 40)
             
-            parent_strategies = self.db.get_top_k(k=3)
+            parent_strategies = self.db.get_top_k(k=1)
             
             if not parent_strategies:
                 # Generate seed strategy

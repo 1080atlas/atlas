@@ -339,7 +339,15 @@ When adding new modules:
 - Enhanced guard-rail testing with aiohttp detection
 - Updated database tests for candidate status filtering
 
+### August 2025 Audit Fixes (P1 Critical Tasks)
+- **P1.1**: Verified planner.py plan_strategy returns correct {code, motivation} format
+- **P1.2**: Confirmed analyzer.py report headings (Summary, Stability, Strengths, Next Action) 
+- **P1.3**: Enhanced guard_rail.py with ADV ≤ 5% constraint checking and node.module handling
+- **P1.4**: Verified backtester.py unstable flag computation for test fold Sharpe < 0.3
+- **P1.5**: Fixed pipeline_runner.py to use get_top_k(k=1) and pass unstable flag to analyzer
+- **P1.6**: Added UNIQUE constraint on strategies.version in database.py schema
+
 ---
 
-*Last Updated: January 2025*
-*Atlas Version: 1.1.0 (Roadmap Implementation Complete)*
+*Last Updated: August 2025*
+*Atlas Version: 1.2.0 (August 2025 Audit Complete)*

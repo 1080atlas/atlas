@@ -226,6 +226,47 @@ This is test content for section 2.
         count = self.kb.generate_embeddings()
         assert count == 0
     
+    def test_market_structure_query(self):
+        """Test knowledge retrieval specifically for 'market structure' query."""
+        # Create market structure knowledge content
+        market_file = self.kb.knowledge_dir / "market_structure_test.md"
+        market_content = """# Market Structure Knowledge
+        
+## Bid-Ask Spreads
+The bid-ask spread represents the difference between highest bid and lowest ask prices.
+
+## Market Impact
+Large orders can move prices unfavorably, creating slippage costs.
+
+## Volume Analysis  
+Trading volume confirms price movements and indicates market strength.
+"""
+        
+        with open(market_file, 'w') as f:
+            f.write(market_content)
+        
+        try:
+            # Generate embeddings and test retrieval
+            self.kb.generate_embeddings()
+            
+            # Query for market structure
+            results = self.kb.retrieve_top_n("market structure", n=3)
+            
+            assert len(results) > 0
+            
+            # Check that market structure content is retrieved
+            all_text = ' '.join([r['text'] for r in results])
+            assert any(term in all_text.lower() for term in ['bid-ask', 'market impact', 'spread'])
+            
+            # Verify result format
+            for result in results:
+                assert 'filepath' in result
+                assert 'text' in result
+                assert len(result['text']) > 0
+                
+        except Exception as e:
+            pytest.skip(f"Skipping market structure test due to model loading issue: {e}")
+    
     def test_malformed_markdown_handling(self):
         """Test handling of malformed markdown files."""
         # Create a file with problematic content

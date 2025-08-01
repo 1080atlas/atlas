@@ -41,6 +41,10 @@ class DatabaseManager:
                 CREATE INDEX IF NOT EXISTS idx_strategies_status 
                 ON strategies (status)
             """)
+            conn.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_strategies_version_unique 
+                ON strategies (version)
+            """)
     
     def init_knowledge_database(self):
         """Initialize the knowledge base database for embeddings."""
