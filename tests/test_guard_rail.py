@@ -38,8 +38,8 @@ signals = signals.fillna(0.0)
 """
         
         result = self.guard_rail.check_strategy(valid_code, self.sample_data)
-        assert result['status'] == 'passed'
-        assert len(result['violations']) == 0
+        assert result['passed'] == True
+        assert len(result['errors']) == 0
     
     def test_banned_imports_detected(self):
         """Test that banned imports are detected."""
@@ -52,8 +52,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(banned_code)
-        assert result['status'] == 'failed'
-        assert any('import' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('import' in v.lower() for v in result['errors'])
     
     def test_datetime_now_detected(self):
         """Test that datetime.now() is detected as violation."""
@@ -67,8 +67,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(datetime_code)
-        assert result['status'] == 'failed'
-        assert any('now' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('now' in v.lower() for v in result['errors'])
     
     def test_forward_looking_detected(self):
         """Test that forward-looking operations are detected."""
@@ -82,8 +82,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(forward_code)
-        assert result['status'] == 'failed'
-        assert any('forward' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('forward' in v.lower() for v in result['errors'])
     
     def test_high_leverage_detected(self):
         """Test that high leverage mentions are detected."""
@@ -97,8 +97,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(leverage_code, self.sample_data)
-        assert result['status'] == 'failed'
-        assert any('leverage' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('leverage' in v.lower() for v in result['errors'])
     
     def test_file_operations_outside_tmp_detected(self):
         """Test that file operations outside /tmp are detected."""
@@ -113,8 +113,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(file_code)
-        assert result['status'] == 'failed'
-        assert any('file' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('file' in v.lower() for v in result['errors'])
     
     def test_network_operations_detected(self):
         """Test that network operations are detected."""
@@ -128,9 +128,29 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(network_code)
-        assert result['status'] == 'failed'
-        violations_text = ' '.join(result['violations']).lower()
-        assert 'network' in violations_text or 'requests' in violations_text
+        assert result['passed'] == False
+        errors_text = ' '.join(result['errors']).lower()
+        assert 'network' in errors_text or 'requests' in errors_text
+    
+    def test_aiohttp_operations_detected(self):
+        """Test that aiohttp operations are detected."""
+        aiohttp_code = """
+import pandas as pd
+import numpy as np
+import aiohttp
+
+async def fetch_data():
+    async with aiohttp.ClientSession() as session:
+        async with session.get('http://example.com') as resp:
+            return await resp.text()
+
+signals = pd.Series(1.0, index=price.index)
+"""
+        
+        result = self.guard_rail.check_strategy(aiohttp_code)
+        assert result['passed'] == False
+        errors_text = ' '.join(result['errors']).lower()
+        assert 'network' in errors_text or 'aiohttp' in errors_text
     
     def test_dangerous_functions_detected(self):
         """Test that dangerous functions like eval are detected."""
@@ -143,8 +163,8 @@ signals = pd.Series(1.0, index=price.index)
 """
         
         result = self.guard_rail.check_strategy(dangerous_code)
-        assert result['status'] == 'failed'
-        assert any('eval' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('eval' in v.lower() for v in result['errors'])
     
     def test_syntax_error_handling(self):
         """Test that syntax errors are handled gracefully."""
@@ -157,8 +177,8 @@ signals = pd.Series(1.0, index=price.index
 """
         
         result = self.guard_rail.check_strategy(syntax_error_code)
-        assert result['status'] == 'failed'
-        assert any('syntax' in v.lower() for v in result['violations'])
+        assert result['passed'] == False
+        assert any('syntax' in v.lower() for v in result['errors'])
     
     def test_signal_validation(self):
         """Test signal validation functionality."""
@@ -197,8 +217,8 @@ signals = pd.Series(np.where(short_ma > price, 1.0, -1.0), index=price.index)
 """
         
         result = self.guard_rail.check_strategy(allowed_code)
-        assert result['status'] == 'passed'
-        assert len(result['violations']) == 0
+        assert result['passed'] == True
+        assert len(result['errors']) == 0
 
 if __name__ == "__main__":
     pytest.main([__file__])

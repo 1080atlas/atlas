@@ -219,12 +219,32 @@ Volume confirms price movements. Rising prices on increasing volume suggest stro
         top_entries = []
         for similarity, entry in similarities[:n]:
             top_entries.append({
-                'content': entry['content'],
                 'filepath': entry['filepath'],
-                'similarity': similarity
+                'text': entry['content']
             })
         
         return top_entries
+    
+    def load_snippet_text(self, filepath: str) -> str:
+        """Load raw Markdown text from a knowledge file for citations."""
+        try:
+            # Remove chunk ID if present (format: filepath#chunk_id)
+            clean_filepath = filepath.split('#')[0]
+            file_path = Path(clean_filepath)
+            
+            if file_path.exists():
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            else:
+                # If file doesn't exist, try looking in knowledge directory
+                knowledge_file = self.knowledge_dir / file_path.name
+                if knowledge_file.exists():
+                    with open(knowledge_file, 'r', encoding='utf-8') as f:
+                        return f.read()
+                else:
+                    return f"Knowledge file not found: {filepath}"
+        except Exception as e:
+            return f"Error loading knowledge file {filepath}: {str(e)}"
     
     def search_knowledge(self, query: str, n: int = 3) -> str:
         """Search knowledge base and return formatted citations."""

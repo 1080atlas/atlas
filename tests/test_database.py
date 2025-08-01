@@ -60,7 +60,7 @@ class TestDatabaseManager:
             code=code,
             motivation=motivation,
             metrics=metrics,
-            status="completed"
+            status="candidate"
         )
         
         assert isinstance(strategy_id, int)
@@ -72,7 +72,7 @@ class TestDatabaseManager:
         assert strategy['code'] == code
         assert strategy['motivation'] == motivation
         assert strategy['metrics'] == metrics
-        assert strategy['status'] == "completed"
+        assert strategy['status'] == "candidate"
     
     def test_get_top_k_strategies(self):
         """Test retrieving top K strategies."""
@@ -89,7 +89,7 @@ class TestDatabaseManager:
             strategy_id = self.db.store_strategy(
                 code=code,
                 metrics=metrics,
-                status="completed"
+                status="candidate"
             )
             stored_ids.append(strategy_id)
         
@@ -226,7 +226,7 @@ class TestDatabaseManager:
         strategy_id = self.db.store_strategy(
             code="test",
             metrics=complex_metrics,
-            status="completed"
+            status="candidate"
         )
         
         retrieved_strategy = self.db.get_strategy(strategy_id)
@@ -238,7 +238,7 @@ class TestDatabaseManager:
         assert strategy is None
     
     def test_empty_top_k(self):
-        """Test getting top K when no completed strategies exist."""
+        """Test getting top K when no candidate strategies exist."""
         # Store a pending strategy (shouldn't be included in top K)
         self.db.store_strategy(code="test", status="pending")
         

@@ -47,8 +47,8 @@ class StaticGuardRail:
             tree = ast.parse(strategy_code)
         except SyntaxError as e:
             return {
-                'status': 'failed',
-                'violations': [f"Syntax error: {str(e)}"]
+                'passed': False,
+                'errors': [f"Syntax error: {str(e)}"]
             }
         
         # Check for banned patterns
@@ -70,11 +70,11 @@ class StaticGuardRail:
         # Check network operations
         violations.extend(self._check_network_operations(strategy_code))
         
-        status = 'passed' if not violations else 'failed'
+        passed = len(violations) == 0
         
         return {
-            'status': status,
-            'violations': violations
+            'passed': passed,
+            'errors': violations
         }
     
     def _check_banned_patterns(self, code: str) -> List[str]:
@@ -227,6 +227,7 @@ class StaticGuardRail:
         network_patterns = [
             r'requests\.',
             r'urllib\.',
+            r'aiohttp\.',
             r'socket\.',
             r'http\.',
             r'ftp\.',

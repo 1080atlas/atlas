@@ -110,9 +110,9 @@ class AtlasPipeline:
             
             guard_result = self.guard_rail.check_strategy(new_code, self.data)
             
-            if guard_result['status'] == 'failed':
+            if not guard_result['passed']:
                 print(f"❌ Guard-rail violations detected:")
-                for violation in guard_result['violations']:
+                for violation in guard_result['errors']:
                     print(f"  - {violation}")
                 
                 # Store failed strategy
@@ -174,7 +174,8 @@ class AtlasPipeline:
                 strategy_id=strategy_id,
                 backtest_results=backtest_results,
                 strategy_code=new_code,
-                motivation=new_motivation
+                motivation=new_motivation,
+                unstable=backtest_results.get('unstable', False)
             )
             
             # Extract key metrics for database
@@ -190,7 +191,7 @@ class AtlasPipeline:
             # Update strategy with results
             self.db.update_strategy_metrics(strategy_id, performance_summary)
             self.db.update_strategy_analysis(strategy_id, analysis_report)
-            self.db.update_strategy_status(strategy_id, 'completed')
+            self.db.update_strategy_status(strategy_id, 'candidate')
             
             print(f"✅ Strategy {strategy_id} stored successfully")
             
@@ -199,7 +200,7 @@ class AtlasPipeline:
             print(f"ITERATION SUMMARY")
             print(f"{'='*60}")
             print(f"Strategy ID: {strategy_id}")
-            print(f"Status: Completed")
+            print(f"Status: Candidate")
             print(f"Test Sharpe: {test_sharpe:.3f}")
             print(f"Max Drawdown: {abs(test_maxdd)*100:.1f}%")
             print(f"Parent ID: {parent_strategies[0]['id'] if parent_strategies else 'None (seed)'}")

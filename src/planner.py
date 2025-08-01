@@ -32,8 +32,8 @@ class StrategyPlanner:
         Returns:
             Dict with 'code', 'motivation', and 'citations'
         """
-        # Retrieve relevant knowledge
-        knowledge_context = self.knowledge_base.search_knowledge(knowledge_query, n=3)
+        # Retrieve relevant knowledge snippets
+        knowledge_snippets = self.knowledge_base.retrieve_top_n(knowledge_query, n=3)
         
         # Construct the planning prompt
         planning_prompt = f"""
@@ -52,8 +52,8 @@ class StrategyPlanner:
 **Analyzer Feedback:**
 {analyzer_feedback}
 
-**Relevant Knowledge Context:**
-{knowledge_context}
+**Relevant Knowledge Snippets:**
+{self._format_knowledge_snippets(knowledge_snippets)}
 
 ---
 
@@ -76,12 +76,31 @@ Please generate an improved strategy following the format specified above. Focus
             
             # Parse the response to extract code and motivation
             parsed_response = self._parse_response(response_text)
-            parsed_response['knowledge_citations'] = knowledge_context
             
-            return parsed_response
+            # Return only code and motivation as specified in roadmap
+            return {
+                'code': parsed_response['code'],
+                'motivation': parsed_response['motivation']
+            }
             
         except Exception as e:
             raise RuntimeError(f"Strategy planning failed: {str(e)}")
+    
+    def _format_knowledge_snippets(self, snippets: List[Dict]) -> str:
+        """Format knowledge snippets for inclusion in prompt."""
+        if not snippets:
+            return "No relevant knowledge snippets found."
+        
+        formatted_snippets = []
+        for i, snippet in enumerate(snippets, 1):
+            filepath = snippet['filepath'].split('#')[0]  # Remove chunk ID
+            filename = Path(filepath).name
+            
+            formatted_snippets.append(
+                f"[{i}] From {filename}:\n{snippet['text']}\n"
+            )
+        
+        return "\n".join(formatted_snippets)
     
     def _parse_response(self, response_text: str) -> Dict:
         """Parse the LLM response to extract code and motivation."""

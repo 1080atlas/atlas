@@ -12,12 +12,14 @@ class WalkForwardBacktester:
                  validation_months: int = 6,
                  test_months: int = 1,
                  roll_months: int = 1,
+                 purge_days: int = 1,  # Days to purge between windows
                  bid_ask_spread: float = 0.001,  # 10 bps
                  slippage: float = 0.001):  # 10 bps
         self.train_months = train_months
         self.validation_months = validation_months
         self.test_months = test_months
         self.roll_months = roll_months
+        self.purge_days = purge_days
         self.bid_ask_spread = bid_ask_spread
         self.slippage = slippage
     
@@ -40,12 +42,18 @@ class WalkForwardBacktester:
             if test_end > data_end:
                 break
             
-            # Find actual dates in the data index
+            # Find actual dates in the data index with purging
             train_start_actual = data.index[data.index >= current_start][0]
             train_end_actual = data.index[data.index <= train_end][-1]
-            val_start_actual = data.index[data.index > train_end_actual][0]
+            
+            # Add purge period after training
+            purge_after_train = train_end_actual + pd.DateOffset(days=self.purge_days)
+            val_start_actual = data.index[data.index > purge_after_train][0]
             val_end_actual = data.index[data.index <= val_end][-1]
-            test_start_actual = data.index[data.index > val_end_actual][0]
+            
+            # Add purge period after validation
+            purge_after_val = val_end_actual + pd.DateOffset(days=self.purge_days)
+            test_start_actual = data.index[data.index > purge_after_val][0]
             test_end_actual = data.index[data.index <= test_end][-1]
             
             window = {
@@ -233,6 +241,9 @@ class WalkForwardBacktester:
         # Calculate aggregate metrics
         results['aggregate_metrics'] = self.calculate_aggregate_metrics(results)
         
+        # Check for Sharpe instability (any test fold Sharpe < 0.3)
+        results['unstable'] = self._check_sharpe_instability(results)
+        
         return results
     
     def calculate_aggregate_metrics(self, results: Dict) -> Dict:
@@ -258,3 +269,18 @@ class WalkForwardBacktester:
             metrics[f'{period}_unstable_windows'] = sum(1 for s in sharpe_ratios if s < 0.3)
         
         return metrics
+    
+    def _check_sharpe_instability(self, results: Dict) -> bool:
+        """Check if any test fold has Sharpe ratio < 0.3."""
+        test_results = results.get('test_results', [])
+        
+        if not test_results:
+            return True  # No test results is considered unstable
+        
+        # Check if any test window has Sharpe < 0.3
+        for test_result in test_results:
+            sharpe = test_result.get('sharpe_ratio', 0)
+            if sharpe < 0.3:
+                return True
+        
+        return False

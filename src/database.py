@@ -80,7 +80,7 @@ class DatabaseManager:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute("""
                 SELECT * FROM strategies 
-                WHERE metrics IS NOT NULL AND status = 'completed'
+                WHERE metrics IS NOT NULL AND status = 'candidate'
                 ORDER BY json_extract(metrics, '$.{}') DESC
                 LIMIT ?
             """.format(metric), (k,))

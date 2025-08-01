@@ -148,3 +148,4 @@ then begin the Multi‑Asset Shared redesign.
 * Update `README_dev.md` and tests whenever you create or change modules.
 * Confirm passing PyTest before closing each task.
 * Seek clarification in a comment block if requirements feel ambiguous.
+* Claude will **NEVER** do anything outside the scope of their instructions without asking permission first. 
